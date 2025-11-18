@@ -8,7 +8,7 @@ import multiprocessing
 import utils
 from utils import device
 from model import ACModel
-from gym_minigrid.wrappers_dh import FullyObsWrapper
+from minigrid.wrappers import FullyObsWrapper
 import inspect
 import warnings
 warnings.filterwarnings("ignore", message="This code base is no longer maintained")
@@ -36,7 +36,7 @@ parser.add_argument("--save-interval", type=int, default=1,
                     help="number of updates between two saves (default: 10, 0 means no saving)")
 parser.add_argument("--procs", type=int, default=3,
                     help="number of processes (default: 16)")
-parser.add_argument("--frames", type=int, default=20000, 
+parser.add_argument("--frames", type=int, default=200000, 
                     help="number of frames of training (default: 1e7)")
 
 # Parameters for main algorithm
@@ -111,7 +111,7 @@ if __name__ == "__main__":
     envs = []
     for i in range(args.procs):
         #envs.append(utils.make_env(args.env, args.seed + 10000 * i)) 
-        env = FullyObsWrapper(utils.make_env(args.env, args.seed + 10000 * i) , tile_size=32)
+        env = FullyObsWrapper(utils.make_env(args.env, args.seed + 10000 * i))
         envs.append(env)
     txt_logger.info("Environments loaded\n")
 
@@ -147,7 +147,7 @@ if __name__ == "__main__":
                                 args.entropy_coef, args.value_loss_coef, args.max_grad_norm, args.recurrence,
                                 args.optim_alpha, args.optim_eps, preprocess_obss,args.procs, args.action_option,args.env)
     elif args.algo == "ppo":
-        algo = torch_ac.PPOAlgo(envs, acmodel, device, args.frames_per_proc, args.discount, args.lr, args.gae_lambda,
+         algo = torch_ac.PPOAlgo(envs, acmodel, device, args.frames_per_proc, args.discount, args.lr, args.gae_lambda,
                                 args.entropy_coef, args.value_loss_coef, args.max_grad_norm, args.recurrence,
                                 args.optim_eps, args.clip_eps, args.epochs, args.batch_size, preprocess_obss,args.procs, args.action_option,args.env)
     else:
@@ -168,7 +168,7 @@ if __name__ == "__main__":
         while num_frames < args.frames:
             # Update model parameters
             update_start_time = time.time()
-            exps, logs1,rgb_images ,missions= algo.collect_experiences()
+            exps, logs1, rgb_images ,missions= algo.collect_experiences()
             logs2 = algo.update_parameters(exps,rgb_images,missions)
             logs = {**logs1, **logs2}
             status['num_frames'] += logs["num_frames"]

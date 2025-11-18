@@ -9,11 +9,11 @@ from PIL import ImageDraw
 from PIL import Image
 import re
 
-from gym_minigrid.wrappers import *
-from image_preprocess import CUSTOMIZED_ACTION_VOCAB, INTERACTION_ACTIONS, create_image_from_2_sequences, create_image_from_1_sequence, create_single_image_without_wall
+#from gym_minigrid.wrappers import *
+from .image_preprocess import CUSTOMIZED_ACTION_VOCAB, INTERACTION_ACTIONS, create_image_from_2_sequences, create_image_from_1_sequence, create_single_image_without_wall
 
-from prompt_gemini_2turn_coord import fewshot_prompt_coord
-from prompt_gemini_2turn_32shot import fewshot_prompt_action
+from .prompt_gemini_2turn_coord import fewshot_prompt_coord
+from .prompt_gemini_2turn_32shot import fewshot_prompt_action
 
 import google.generativeai as genai
 from google.generativeai.types import HarmCategory, HarmBlockThreshold

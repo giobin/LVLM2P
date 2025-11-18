@@ -3,8 +3,8 @@ import torch
 import torch.nn.functional as F
 
 from torch_ac.algos.base import BaseAlgo
-from gemini_policy_2turn import query_probability_from_vlm_with_images, construct_vlm_with_key, construct_gemini_keys
-from image_preprocess import create_single_image_without_wall
+from .vlm_policy.gemini_policy_2turn import query_probability_from_vlm_with_images, construct_vlm_with_key, construct_gemini_keys
+from .vlm_policy.image_preprocess import create_single_image_without_wall
 import time
 import multiprocessing
 from multiprocessing import get_context

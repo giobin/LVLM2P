@@ -13,16 +13,20 @@ from multiprocessing import get_context
 from multiprocessing import Pool
 
 import sys
-sys.path.append("LVLM2P/torch_ac/algos/vlm_policy")
-from gemini_policy_2turn import query_probability_from_vlm_with_images, construct_vlm_with_key, construct_gemini_keys
-from image_preprocess import create_single_image_without_wall
+from .vlm_policy.gemini_policy_2turn import (
+    query_probability_from_vlm_with_images,
+    construct_vlm_with_key,
+    construct_gemini_keys,
+)
+
+from .vlm_policy.image_preprocess import create_single_image_without_wall
 
 
 def worker(args):
     rank,n_workers ,obs_data = args  # args : (index, (obs, dist))
     obs, dist_prob = obs_data
     if dist_prob=="vlm_evaluate":
-        processed_image = create_single_image_without_wall(obs['rgb_image'], edit_image=False, obs_size=192)
+        processed_image = create_single_image_without_wall(obs['image'], edit_image=False, obs_size=192)
         target_object = obs['mission'][10:]
         vlm_prob_dist = get_probability_from_vlm(processed_image, target_object,n_workers,rank)
         
@@ -32,7 +36,7 @@ def worker(args):
 
         return rank, vlm_action
     else:
-        processed_image = create_single_image_without_wall(obs['rgb_image'], edit_image=False, obs_size=192)
+        processed_image = create_single_image_without_wall(obs['image'], edit_image=False, obs_size=192)
         target_object = obs['mission'][10:]
         vlm_prob_dist = get_probability_from_vlm(processed_image, target_object,n_workers,rank)
         
@@ -166,7 +170,8 @@ class BaseAlgo(ABC):
         self.log_return = [0] * self.num_procs
         self.log_reshaped_return = [0] * self.num_procs
         self.log_num_frames = [0] * self.num_procs
-        construct_gemini_keys(num_rollout_workers=self.n_workers)
+        if self.action_option!="ppo_baseline":
+            construct_gemini_keys(num_rollout_workers=self.n_workers)
 
     def collect_experiences(self):
         """Collects rollouts and computes advantages.
@@ -206,7 +211,7 @@ class BaseAlgo(ABC):
                 #done = tuple(a | b for a, b in zip(terminated, truncated))
                 self.obss[i] = self.obs
                 for j in range(len(self.obs)):
-                    self.rgb_images[i].append(self.obs[j]['rgb_image'])
+                    self.rgb_images[i].append(self.obs[j]['image'])
                     self.missions[i].append(self.obs[j]['mission'])
                 self.obs = obs
                 if self.acmodel.recurrent:
@@ -369,6 +374,9 @@ class BaseAlgo(ABC):
                 
                 # Update experiences values
                 self.obss[i] = self.obs
+                for j in range(len(self.obs)):
+                    self.rgb_images[i].append(self.obs[j]['image'])
+                    self.missions[i].append(self.obs[j]['mission'])
                 self.obs = obs
                 if self.acmodel.recurrent:
                     self.memories[i] = self.memory
@@ -431,6 +439,12 @@ class BaseAlgo(ABC):
             exps.obs = [self.obss[i][j]
                         for j in range(self.num_procs)
                         for i in range(self.num_frames_per_proc)]
+            rgb_images = [self.rgb_images[i][j]
+                        for j in range(self.num_procs)
+                        for i in range(self.num_frames_per_proc)]
+            missions=[self.missions[i][j]
+                        for j in range(self.num_procs)
+                        for i in range(self.num_frames_per_proc)]
             if self.acmodel.recurrent:
                 # T x P x D -> P x T x D -> (P * T) x D
                 exps.memory = self.memories.transpose(0, 1).reshape(-1, *self.memories.shape[2:])
@@ -443,7 +457,6 @@ class BaseAlgo(ABC):
             exps.advantage = self.advantages.transpose(0, 1).reshape(-1)
             exps.returnn = exps.value + exps.advantage
             exps.log_prob = self.log_probs.transpose(0, 1).reshape(-1)
-            exps.KL_div  = self.KL_div_batchs.transpose(0, 1).reshape(-1)
 
             # Preprocess experiences
             exps.obs = self.preprocess_obss(exps.obs, device=self.device)
@@ -463,7 +476,7 @@ class BaseAlgo(ABC):
             self.log_reshaped_return = self.log_reshaped_return[-self.num_procs:]
             self.log_num_frames = self.log_num_frames[-self.num_procs:]
 
-            return exps, logs
+            return exps, logs, rgb_images, missions
 
     @abstractmethod
     def update_parameters(self):

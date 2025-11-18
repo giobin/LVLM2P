@@ -1,15 +1,19 @@
 
 from PIL import Image
+from pathlib import Path
+
+_HERE = Path(__file__).resolve().parent
+_FEW_SHOT_DIR = _HERE / "few_shot_coordinate"
 
 images=[
-    # 5_shot :  1 2 5 6 7
-    Image.open(r"LVLM2P/algos/vlm_policy/few_shot_coordinate/few_shot1.png"),
-    Image.open(r"LVLM2P/algos/vlm_policy/few_shot_coordinate/few_shot2.png"),
-    Image.open(r"LVLM2P/algos/vlm_policy/few_shot_coordinate/few_shot3.png"),
-    Image.open(r"LVLM2P/algos/vlm_policy/few_shot_coordinate/few_shot4.png"),
-    Image.open(r"LVLM2P/algos/vlm_policy/few_shot_coordinate/few_shot5.png"),
-    Image.open(r"LVLM2P/algos/vlm_policy/few_shot_coordinate/few_shot6.png"),
+    Image.open(_FEW_SHOT_DIR / "few_shot1.png"),
+    Image.open(_FEW_SHOT_DIR / "few_shot2.png"),
+    Image.open(_FEW_SHOT_DIR / "few_shot3.png"),
+    Image.open(_FEW_SHOT_DIR / "few_shot4.png"),
+    Image.open(_FEW_SHOT_DIR / "few_shot5.png"),
+    Image.open(_FEW_SHOT_DIR / "few_shot6.png"),
 ]
+
 fewshot_prompt_coord=[
     # 1st example
     {

@@ -1,10 +1,14 @@
 import argparse
 import time
 import torch
+import minigrid
 from torch_ac.utils.penv import ParallelEnv
 
 import utils
 from utils import device
+from utils.env import make_env
+
+
 
 
 # Parse arguments
@@ -44,7 +48,7 @@ if __name__ == "__main__":
 
     envs = []
     for i in range(args.procs):
-        env = utils.make_env(args.env, args.seed + 10000 * i)
+        env = make_env(args.env, args.seed + 10000 * i)
         envs.append(env)
     env = ParallelEnv(envs)
     print("Environments loaded\n")
